@@ -56,14 +56,17 @@ struct ContentView: View {
                 .onDelete(perform: removeItem)
             }
             .navigationTitle("iExpense")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                Button("Add item", systemImage: "plus") {
-                    showingAddExpense = true
+//                Button("Add item", systemImage: "plus") {
+//                    showingAddExpense = true
+                NavigationLink(destination: AddView(expenses: expenses)) {
+                    Image(systemName: "doc.badge.plus")
                 }
             }
-            .sheet(isPresented: $showingAddExpense) {
-                AddView(expenses: expenses)
-            }
+//            .sheet(isPresented: $showingAddExpense) {
+//                AddView(expenses: expenses)
+//            }
         }
     }
     func removeItem(at offsets: IndexSet) {
