@@ -5,45 +5,53 @@
 //  Created by FZJ on 2024/4/25.
 //
 
+import SwiftData
 import SwiftUI
 
 struct AddView: View {
-    @Environment(\.dismiss) var dismiss
-    @State private var name = "Edit your item name"
+    @Environment(\.modelContext) var modelContext
+
+    @State private var name = "Expense Name"
     @State private var type = "Personal"
     @State private var amount = 0.0
-    
-    var expenses: Expenses
-    
-    let types = ["Personal", "Business"]
-    
+
+    @Environment(\.dismiss) var dismiss
+
     var body: some View {
-        NavigationStack {
+        //NavigationStack {
             Form {
-//                TextField("name", text: $name)
-                
-                Picker("type", selection: $type) {
-                    ForEach(types, id: \.self) {
+                //TextField("Name", text: $name)
+
+                Picker("Type", selection: $type) {
+                    ForEach(Expense.types, id: \.self) {
                         Text($0)
                     }
                 }
-                
-                TextField("amount", value: $amount, format: .currency(code: Locale.current.currency?.identifier ?? "CNY"))
+
+                TextField("Amount", value: $amount, format: .currency(code: "USD"))
                     .keyboardType(.decimalPad)
             }
             .navigationTitle($name)
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden()
             .toolbar {
-                Button("save") {
-                    let item = ExpenseItem(name: name, type: type, amount: amount)
-                    item.type == "Personal" ? expenses.items.insert(item, at: 0) : expenses.items.append(item)
-                    dismiss()
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        let expense = Expense(name: name, type: type, amount: amount)
+                        modelContext.insert(expense)
+                        dismiss()
+                    }
                 }
             }
-        }
+        //}
     }
 }
 
 #Preview {
-    AddView(expenses: Expenses())
+    AddView()
 }

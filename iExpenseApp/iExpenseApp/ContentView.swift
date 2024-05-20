@@ -5,72 +5,67 @@
 //  Created by FZJ on 2024/4/25.
 //
 
+import SwiftData
 import SwiftUI
 
-struct ExpenseItem: Identifiable, Codable {
-    var id = UUID()
-    let name: String
-    let type: String
-    let amount: Double
-}
-
-@Observable
-class Expenses {
-    var items = [ExpenseItem]() {
-        didSet {
-            if let encoded = try? JSONEncoder().encode(items) {
-                UserDefaults.standard.set(encoded, forKey: "Items")
-            }
-        }
-    }
-    init() {
-        if let savedItems = UserDefaults.standard.data(forKey: "Items") {
-            if let decodedItems = try? JSONDecoder().decode([ExpenseItem].self, from: savedItems) {
-                items = decodedItems
-                return
-            }
-        }
-        items = []
-    }
-}
-
 struct ContentView: View {
-    @State private var expenses = Expenses()
+    @Environment(\.modelContext) var modelContext
+    @Query var expenses: [Expense]
+    
+    @State private var path: [String] = []
     @State private var showingAddExpense = false
+    @State private var types = Expense.types
+    @State private var sortOrder = [
+        SortDescriptor(\Expense.name),
+        SortDescriptor(\Expense.amount, order: .reverse)
+    ]
     
     var body: some View {
-        NavigationStack {
-            List {
-                ForEach(expenses.items, id: \.id) { item in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(item.type)
-                                .font(.headline)
-                            Text(item.name)
-                                .foregroundColor(item.amount<10 ? .green : item.amount > 100 ? .red : .black)
+        NavigationStack(path: $path) {
+            ExpensesView(types: types, sortOrder: sortOrder)
+                .navigationTitle("iExpense")
+                .toolbar {
+                    Button("Add Expense", systemImage: "plus") {
+                        //showingAddExpense = true
+                        path.append("AddExpense")
+                    }
+                    Menu("Type") {
+                        Picker("Type", selection: $types) {
+                            Text("All").tag(Expense.types)
+                            Text("Just Business").tag(["Business"])
+                            Text("Just Personal").tag(["Personal"])
                         }
-                        Spacer()
-                        Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "CNY"))
+                    }
+                    Menu("Sort", systemImage: "arrow.up.arrow.down") {
+                        Picker("Sort", selection: $sortOrder) {
+                            Text("Sort by Type")
+                                .tag([
+                                    SortDescriptor(\Expense.type),
+                                    SortDescriptor(\Expense.name),
+                                    SortDescriptor(\Expense.amount, order: .reverse)
+                                ])
+                            Text("Sort by Highest Amount")
+                                .tag([
+                                    SortDescriptor(\Expense.amount, order: .reverse),
+                                    SortDescriptor(\Expense.type),
+                                    SortDescriptor(\Expense.name)
+                                ])
+                        }
                     }
                 }
-                .onDelete(perform: removeItem)
-            }
-            .navigationTitle("iExpense")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-//                Button("Add item", systemImage: "plus") {
-//                    showingAddExpense = true
-                NavigationLink(destination: AddView(expenses: expenses)) {
-                    Image(systemName: "doc.badge.plus")
+                .navigationDestination(for: String.self) { i in
+                    AddView()
                 }
-            }
-//            .sheet(isPresented: $showingAddExpense) {
-//                AddView(expenses: expenses)
-//            }
+            //.sheet(isPresented: $showingAddExpense) {
+            //    AddView(expenses: expenses)
+            //}
         }
     }
-    func removeItem(at offsets: IndexSet) {
-        expenses.items.remove(atOffsets: offsets)
+    func deleteExpense(at offsets: IndexSet) {
+        for offset in offsets {
+            let expense = expenses[offset]
+            modelContext.delete(expense)
+        }
     }
 }
 
