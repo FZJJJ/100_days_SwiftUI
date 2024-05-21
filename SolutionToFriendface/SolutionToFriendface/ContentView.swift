@@ -8,14 +8,43 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var users = [User]()
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        NavigationStack {
+            List {
+                ForEach(users) { user in
+                    NavigationLink(value: user) {
+                        HStack {
+                            Circle()
+                                .frame(width: 7)
+                                .foregroundStyle(user.isActive ? .green : .gray)
+                            Text(user.name)
+                        }
+                    }
+                }
+            }
+            .navigationDestination(for: User.self) { user in
+                DetailView(user: user)
+            }
+            .task {
+                await loadData()
+            }
+            .navigationTitle("FriendFace")
         }
-        .padding()
+    }
+    func loadData() async {
+        guard users.isEmpty else { return }
+        guard let url = URL(string: "https://www.hackingwithswift.com/samples/friendface.json") else { return }
+        
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            
+            users = try decoder.decode([User].self, from: data)
+        } catch {
+            print("Failed to load data: \(error.localizedDescription)")
+        }
     }
 }
 

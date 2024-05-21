@@ -8,11 +8,18 @@
 import SwiftUI
 
 struct NaviView: View {
+    var user: User
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        HStack {
+            Text("\(user.name)")
+            Text("\(user.age)")
+            Image(systemName: "circle.fill")
+                .font(.system(size: 10))
+                .foregroundStyle(user.isActive ? .green : .gray)
+        }
     }
 }
 
 #Preview {
-    NaviView()
+    NaviView(user: User.testUser)
 }
