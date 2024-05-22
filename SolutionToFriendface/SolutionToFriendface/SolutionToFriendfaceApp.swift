@@ -5,6 +5,7 @@
 //  Created by FZJ on 2024/5/21.
 //
 
+import SwiftData
 import SwiftUI
 
 @main
@@ -13,5 +14,6 @@ struct SolutionToFriendfaceApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: User.self)
     }
 }
